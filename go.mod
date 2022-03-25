@@ -70,3 +70,5 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	lukechampine.com/blake3 v1.1.6 // indirect
 )
+
+replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
