@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+generate-car
 
 # Test binary, built with `go test -c`
 *.test
