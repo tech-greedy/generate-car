@@ -1,0 +1,53 @@
+name: Go
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+  release-linux-amd64:
+    name: release linux/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install FFI dependencies
+        run: sudo apt-get update && sudo apt-get install -y libhwloc-dev ocl-icd-opencl-dev
+
+      - name: Build FFI
+        run: make ffi
+
+      - name: Release Go binaries
+        uses: wangyoucao577/go-release-action@v1.25
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: linux
+          goarch: amd64
+          binary_name: generate-car
+          pre_command: make ffi
+          ldflags: -s -w
+  release-macos-11:
+    name: release macos/11
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install FFI dependencies
+        run: sudo apt-get update && sudo apt-get install -y libhwloc-dev ocl-icd-opencl-dev
+
+      - name: Build FFI
+        run: make ffi
+
+      - name: Release Go binaries
+        uses: wangyoucao577/go-release-action@v1.25
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: darwin
+          goarch: amd64
+          binary_name: generate-car
+          pre_command: make ffi
+          ldflags: -s -w
