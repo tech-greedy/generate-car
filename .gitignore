@@ -4,6 +4,8 @@
 *.dll
 *.so
 *.dylib
+generate-car
+go-generate-car
 
 # Test binary, built with `go test -c`
 *.test
@@ -13,3 +15,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+.idea/
+*.car
