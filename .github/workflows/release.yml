@@ -2,7 +2,7 @@ name: Release
 
 on:
   release:
-    types: [released]
+    types: [created]
 
 jobs:
   release-linux-amd64:
@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: 'generate-car'
+          args: generate-car
 
   release-macos-11:
     name: release macos/11
@@ -48,7 +48,7 @@ jobs:
           go-version: 1.17
 
       - name: Install FFI dependencies
-        run: sudo apt-get update && sudo apt-get install -y libhwloc-dev ocl-icd-opencl-dev
+        run: brew install pkg-config hwloc
 
       - name: Build FFI
         run: make ffi
@@ -56,9 +56,12 @@ jobs:
       - name: Build
         run: make build
 
+      - name: Rename
+        run: mv generate-car generate-car-darwin
+
       - name: Upload release binaries
-        uses: skx/github-action-publish-binaries@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: SierraSoftworks/gh-releases@v1.0.4
         with:
-          args: 'generate-car
+          token: ${{ secrets.GITHUB_TOKEN }}
+          overwrite: 'true'
+          files: generate-car-darwin
