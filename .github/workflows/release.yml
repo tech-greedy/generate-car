@@ -25,7 +25,7 @@ jobs:
         run: make ffi
 
       - name: Build
-        run: go build -ldflags "-s -w" -o generate-car ./generate-car-linux-amd64.go
+        run: go build -ldflags "-s -w" -o generate-car-linux-amd64 ./generate-car.go
 
       - name: Upload release binaries
         uses: skx/github-action-publish-binaries@master
@@ -54,7 +54,7 @@ jobs:
         run: make ffi
 
       - name: Build
-        run: go build -ldflags "-s -w" -o generate-car ./generate-car-darwin-amd64.go
+        run: go build -ldflags "-s -w" -o generate-car-darwin-amd64 ./generate-car.go
 
       - name: Rename
         run: mv generate-car generate-car-darwin
