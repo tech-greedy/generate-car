@@ -2,8 +2,6 @@ package util
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
@@ -37,11 +35,14 @@ import (
 
 const UnixfsLinksPerLevel = 1 << 10
 const UnixfsChunkSize uint64 = 1 << 20
+
 var logger = logging.Logger("graphsplit")
+
 type FSBuilder struct {
 	root *dag.ProtoNode
 	ds   ipld.DAGService
 }
+
 func getDirKey(dirList []string, i int) (key string) {
 	for j := 0; j <= i; j++ {
 		key += dirList[j]
@@ -122,12 +123,14 @@ func (fs *fileSlice) Read(p []byte) (n int, err error) {
 	return copy(p, b), io.EOF
 }
 
-func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer, parallel int) (ipldDag string, cid string, err error) {
+func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer, parallel int) (ipldDag *FsNode, cid string, err error) {
 	bs2 := bstore.NewBlockstore(dss.MutexWrap(datastore.NewMapDatastore()))
 	dagServ := merkledag.NewDAGService(blockservice.New(bs2, offline.Exchange(bs2)))
 
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	fileNodeMap := make(map[string]*dag.ProtoNode)
 	dirNodeMap := make(map[string]*dag.ProtoNode)
 
@@ -137,7 +140,6 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 	var rootKey = "root"
 	dirNodeMap[rootKey] = rootNode
 
-	fmt.Println("************ start to build ipld **************")
 	// build file node
 	// parallel build
 	cpun := runtime.NumCPU()
@@ -169,7 +171,6 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 			lock.Lock()
 			fileNodeMap[item.Path] = fn
 			lock.Unlock()
-			fmt.Println(item.Path)
 			logger.Infof("file node: %s", fileNode)
 		}(i, item)
 	}
@@ -242,7 +243,9 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 			}
 			if isLinked(parentNode, dir) {
 				parentNode, err = parentNode.UpdateNodeLink(dir, dirNode)
-				if err != nil { return }
+				if err != nil {
+					return
+				}
 				dirNodeMap[parentKey] = parentNode
 			} else {
 				parentNode.AddNodeLink(dir, dirNode)
@@ -257,7 +260,6 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 	}
 
 	rootNode = dirNodeMap[rootKey]
-	fmt.Printf("root node cid: %s\n", rootNode.Cid())
 	logger.Infof("start to generate car for %s", rootNode.Cid())
 	genCarStartTime := time.Now()
 	//car
@@ -266,17 +268,13 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 	err = sc.Write(output)
 	// cario := cario.NewCarIO()
 	// err = cario.WriteCar(context.Background(), bs2, rootNode.Cid(), selector, carF)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 	logger.Infof("generate car file completed, time elapsed: %s", time.Now().Sub(genCarStartTime))
 
 	fsBuilder := NewFSBuilder(rootNode, dagServ)
-	fsNode, err := fsBuilder.Build()
-	if err != nil { return }
-	fsNodeBytes, err := json.Marshal(fsNode)
-	if err != nil { return }
-	//logger.Info(dirNodeMap)
-	fmt.Println("++++++++++++ finished to build ipld +++++++++++++")
-	ipldDag = fmt.Sprintf("%s", fsNodeBytes)
+	ipldDag, err = fsBuilder.Build()
 	cid = rootNode.Cid().String()
 	return
 }
@@ -322,16 +320,16 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 	}
 	return
 }
-func (b *FSBuilder) Build() (*fsNode, error) {
+func (b *FSBuilder) Build() (*FsNode, error) {
 	fsn, err := unixfs.FSNodeFromBytes(b.root.Data())
 	if err != nil {
 		return nil, xerrors.Errorf("input dag is not a unixfs node: %s", err)
 	}
 
-	rootn := &fsNode{
+	rootn := &FsNode{
 		Hash: b.root.Cid().String(),
 		Size: fsn.FileSize(),
-		Link: []fsNode{},
+		Link: []FsNode{},
 	}
 	if !fsn.IsDir() {
 		return rootn, nil
@@ -346,15 +344,17 @@ func (b *FSBuilder) Build() (*fsNode, error) {
 
 	return rootn, nil
 }
-type fsNode struct {
+
+type FsNode struct {
 	Name string
 	Hash string
 	Size uint64
-	Link []fsNode
+	Link []FsNode
 }
-func (b *FSBuilder) getNodeByLink(ln *format.Link) (fn fsNode, err error) {
+
+func (b *FSBuilder) getNodeByLink(ln *format.Link) (fn FsNode, err error) {
 	ctx := context.Background()
-	fn = fsNode{
+	fn = FsNode{
 		Name: ln.Name,
 		Hash: ln.Cid.String(),
 		Size: ln.Size,

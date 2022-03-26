@@ -27,7 +27,7 @@ func init() {
 
 const BufSize = ((4 << 20) / 128 * 127)
 
-func CalculateCommpHashHash(reader io.Reader) (commCid cid.Cid) {
+func CalculateCommpHashHash(reader io.Reader) (commCid cid.Cid, pieceSize uint64) {
 	DisableStreamScan := false
 	PadPieceSize := uint64(0)
 
@@ -134,6 +134,7 @@ func CalculateCommpHashHash(reader io.Reader) (commCid cid.Cid) {
 			log.Fatal(err)
 		}
 		paddedSize = PadPieceSize
+		pieceSize = paddedSize
 	}
 
 	commCid, err = commcid.DataCommitmentV1ToCID(rawCommP)
