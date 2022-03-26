@@ -25,14 +25,14 @@ jobs:
         run: make ffi
 
       - name: Build
-        run: make build
+        run: go build -ldflags "-s -w" -o generate-car ./generate-car-linux-amd64.go
 
       - name: Upload release binaries
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: generate-car
+          args: generate-car-linux-amd64
 
   release-macos-11:
     name: release macos/11
@@ -54,7 +54,7 @@ jobs:
         run: make ffi
 
       - name: Build
-        run: make build
+        run: go build -ldflags "-s -w" -o generate-car ./generate-car-darwin-amd64.go
 
       - name: Rename
         run: mv generate-car generate-car-darwin
@@ -64,4 +64,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           overwrite: 'true'
-          files: generate-car-darwin
+          files: generate-car-darwin-amd64
