@@ -35,7 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: generate-car-linux-amd64
+          args: generate-car-linux-amd64.tar.gz
 
   release-macos-11:
     name: release macos/11
@@ -67,4 +67,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           overwrite: 'true'
-          files: generate-car-darwin-amd64
+          files: generate-car-darwin-amd64.tar.gz
