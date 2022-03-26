@@ -56,9 +56,6 @@ jobs:
       - name: Build
         run: go build -ldflags "-s -w" -o generate-car-darwin-amd64 ./generate-car.go
 
-      - name: Rename
-        run: mv generate-car generate-car-darwin
-
       - name: Upload release binaries
         uses: SierraSoftworks/gh-releases@v1.0.4
         with:
