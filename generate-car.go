@@ -39,6 +39,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// ./generate-car [parentPath] [outPath] [parallelism]
 	parentPath := ""
 	if len(os.Args) >= 2 {
 		parentPath = os.Args[1]
@@ -71,6 +73,9 @@ func main() {
 
 	writer := io.MultiWriter(carF, pipew)
 	ipld, cid, err := util.GenerateCar(ctx, fileList, parentPath, writer, parallel)
+	if err != nil {
+		panic(err)
+	}
 	err = pipew.Close()
 	if err != nil {
 		panic(err)
@@ -79,6 +84,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = os.Rename(path.Join(outPath, outFilename), path.Join(outPath, cid+".car"))
 	if err != nil {
 		panic(err)
 	}
