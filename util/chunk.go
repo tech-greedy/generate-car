@@ -22,6 +22,7 @@ import (
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
 	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
+	"github.com/pkg/errors"
 	"github.com/prometheus/common/log"
 	"golang.org/x/xerrors"
 	"io"
@@ -200,7 +201,7 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 		}
 		fileNode, ok := fileNodeMap[item.Path]
 		if !ok {
-			panic("unexpected, missing file node")
+			return nil, "", errors.New("File does not exist: " + item.Path)
 		}
 		if len(dirList) == 0 {
 			dirNodeMap[rootKey].AddNodeLink(item.Name, fileNode)

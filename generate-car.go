@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strconv"
 )
 
 type CommpResult struct {
@@ -26,6 +25,13 @@ type Result struct {
 	PieceSize uint64
 }
 
+type Input struct {
+	ParentPath  string
+	OutPath     string
+	Parallelism int
+	FileList    []util.Finfo
+}
+
 func main() {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
@@ -34,30 +40,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	var fileList []util.Finfo
-	err = json.Unmarshal(buf.Bytes(), &fileList)
+	var input Input
+	err = json.Unmarshal(buf.Bytes(), &input)
 	if err != nil {
 		panic(err)
 	}
 
-	// ./generate-car [parentPath] [outPath] [parallelism]
-	parentPath := ""
-	if len(os.Args) >= 2 {
-		parentPath = os.Args[1]
+	if input.Parallelism == 0 {
+		input.Parallelism = 1
 	}
 
-	outPath := "."
-	if len(os.Args) >= 3 {
-		outPath = os.Args[2]
-	}
-
-	parallel := 3
-	if len(os.Args) >= 4 {
-		parallel, _ = strconv.Atoi(os.Args[2])
+	if input.OutPath == "" {
+		input.OutPath = "."
 	}
 
 	outFilename := uuid.New().String() + ".car"
-	carF, err := os.Create(path.Join(outPath, outFilename))
+	carF, err := os.Create(path.Join(input.OutPath, outFilename))
 	if err != nil {
 		panic(err)
 	}
@@ -72,8 +70,11 @@ func main() {
 	}()
 
 	writer := io.MultiWriter(carF, pipew)
-	ipld, cid, err := util.GenerateCar(ctx, fileList, parentPath, writer, parallel)
+	ipld, cid, err := util.GenerateCar(ctx, input.FileList, input.ParentPath, writer, input.Parallelism)
 	if err != nil {
+		carF.Close()
+		pipew.Close()
+		os.Remove(path.Join(input.OutPath, outFilename))
 		panic(err)
 	}
 	err = pipew.Close()
@@ -84,7 +85,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = os.Rename(path.Join(outPath, outFilename), path.Join(outPath, cid+".car"))
+	err = os.Rename(path.Join(input.OutPath, outFilename), path.Join(input.OutPath, cid+".car"))
 	if err != nil {
 		panic(err)
 	}
