@@ -51,7 +51,7 @@ jobs:
           go-version: 1.17
 
       - name: Install FFI dependencies
-        run: brew install pkg-config hwloc
+        run: brew install pkg-config hwloc gnu-tar
 
       - name: Build FFI
         run: make ffi
@@ -60,7 +60,7 @@ jobs:
         run: make build
 
       - name: Tar
-        run: tar -cvzf generate-car-darwin-amd64.tar.gz generate-car
+        run: gtar -cvzf generate-car-darwin-amd64.tar.gz generate-car
 
       - name: Upload release binaries
         uses: SierraSoftworks/gh-releases@v1.0.4
