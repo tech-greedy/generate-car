@@ -22,16 +22,11 @@ import (
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
 	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
-	"github.com/pkg/errors"
-	"github.com/prometheus/common/log"
 	"golang.org/x/xerrors"
 	"io"
 	"os"
-	"path"
-	"runtime"
+	"path/filepath"
 	"strings"
-	"sync"
-	"time"
 )
 
 const UnixfsLinksPerLevel = 1 << 10
@@ -84,32 +79,29 @@ type fileSlice struct {
 
 func (fs *fileSlice) Read(p []byte) (n int, err error) {
 	if fs.end == 0 {
-		fs.end = fs.fileSize - 1
+		fs.end = fs.fileSize
 	}
 	if fs.offset == 0 && fs.start > 0 {
 		_, err = fs.r.Seek(fs.start, 0)
 		if err != nil {
-			log.Warn(err)
+			logger.Warn(err)
 			return 0, err
 		}
 		fs.offset = fs.start
 	}
-	//fmt.Printf("offset: %d, end: %d, start: %d, size: %d\n", fs.offset, fs.end, fs.start, fs.fileSize)
-	if fs.end-fs.offset+1 == 0 {
+	if fs.end-fs.offset == 0 {
 		return 0, io.EOF
 	}
-	if fs.end-fs.offset+1 < 0 {
+	if fs.end-fs.offset < 0 {
 		return 0, xerrors.Errorf("read data out bound of the slice")
 	}
 	plen := len(p)
-	leftLen := fs.end - fs.offset + 1
+	leftLen := fs.end - fs.offset
 	if leftLen > int64(plen) {
 		n, err = fs.r.Read(p)
 		if err != nil {
-			log.Warn(err)
 			return
 		}
-		//fmt.Printf("read num: %d\n", n)
 		fs.offset += int64(n)
 		return
 	}
@@ -118,162 +110,95 @@ func (fs *fileSlice) Read(p []byte) (n int, err error) {
 	if err != nil {
 		return
 	}
-	//fmt.Printf("read num: %d\n", n)
 	fs.offset += int64(n)
 
 	return copy(p, b), io.EOF
 }
 
-func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer, parallel int) (ipldDag *FsNode, cid string, err error) {
+func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer) (ipldDag *FsNode, cid string, err error) {
 	bs2 := bstore.NewBlockstore(dss.MutexWrap(datastore.NewMapDatastore()))
 	dagServ := merkledag.NewDAGService(blockservice.New(bs2, offline.Exchange(bs2)))
-
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
+		logger.Warn(err)
 		return
 	}
-	fileNodeMap := make(map[string]*dag.ProtoNode)
-	dirNodeMap := make(map[string]*dag.ProtoNode)
-
-	var rootNode *dag.ProtoNode
-	rootNode = unixfs.EmptyDirNode()
+	layers := []*dag.ProtoNode{}
+	rootNode := unixfs.EmptyDirNode()
 	rootNode.SetCidBuilder(cidBuilder)
-	var rootKey = "root"
-	dirNodeMap[rootKey] = rootNode
-
-	// build file node
-	// parallel build
-	cpun := runtime.NumCPU()
-	if parallel > cpun {
-		parallel = cpun
-	}
-	pchan := make(chan struct{}, parallel)
-	wg := sync.WaitGroup{}
-	lock := sync.Mutex{}
-	for i, item := range fileList {
-		wg.Add(1)
-		go func(i int, item Finfo) {
-			defer func() {
-				<-pchan
-				wg.Done()
-			}()
-			pchan <- struct{}{}
-			fileNode, err := BuildFileNode(item, dagServ, cidBuilder)
-			if err != nil {
-				logger.Warn(err)
-				return
-			}
-			fn, ok := fileNode.(*dag.ProtoNode)
-			if !ok {
-				emsg := "file node should be *dag.ProtoNode"
-				logger.Warn(emsg)
-				return
-			}
-			lock.Lock()
-			fileNodeMap[item.Path] = fn
-			lock.Unlock()
-			logger.Infof("file node: %s", fileNode)
-		}(i, item)
-	}
-	wg.Wait()
-
-	// build dir tree
+	layers = append(layers, rootNode)
+	previous := []string{""}
 	for _, item := range fileList {
-		// logger.Info(item.Path)
-		// logger.Infof("file name: %s, file size: %d, item size: %d, seek-start:%d, seek-end:%d", item.Name, item.Info.Size(), item.End-item.Start, item.Start, item.End)
-		dirStr := path.Dir(item.Path)
-		parentPath = path.Clean(parentPath)
-		// when parent path equal target path, and the parent path is also a file path
-		if parentPath == path.Clean(item.Path) {
-			dirStr = ""
-		} else if parentPath != "" && strings.HasPrefix(dirStr, parentPath) {
-			dirStr = dirStr[len(parentPath):]
+		var fileNode ipld.Node
+		fileNode, err = BuildFileNode(item, dagServ, cidBuilder)
+		if err != nil {
+			logger.Warn(err)
+			return
 		}
-
-		if strings.HasPrefix(dirStr, "/") {
-			dirStr = dirStr[1:]
-		}
-		var dirList []string
-		if dirStr == "" {
-			dirList = []string{}
-		} else {
-			dirList = strings.Split(dirStr, "/")
-		}
-		fileNode, ok := fileNodeMap[item.Path]
+		node, ok := fileNode.(*dag.ProtoNode)
 		if !ok {
-			return nil, "", errors.New("File does not exist: " + item.Path)
+			logger.Warn(err)
+			return
 		}
-		if len(dirList) == 0 {
-			dirNodeMap[rootKey].AddNodeLink(item.Name, fileNode)
-			continue
+		var path string
+		path, err = filepath.Rel(parentPath, filepath.Clean(item.Path))
+		if err != nil {
+			logger.Warn(err)
+			return
 		}
-		//logger.Info(item.Path)
-		//logger.Info(dirList)
-		i := len(dirList) - 1
-		for ; i >= 0; i-- {
-			// get dirNodeMap by index
-			var ok bool
-			var dirNode *dag.ProtoNode
-			var parentNode *dag.ProtoNode
-			var parentKey string
-			dir := dirList[i]
-			dirKey := getDirKey(dirList, i)
-			logger.Info(dirList)
-			logger.Infof("dirKey: %s", dirKey)
-			dirNode, ok = dirNodeMap[dirKey]
-			if !ok {
-				dirNode = unixfs.EmptyDirNode()
-				dirNode.SetCidBuilder(cidBuilder)
-				dirNodeMap[dirKey] = dirNode
+		current := append([]string{""}, strings.Split(path, string(filepath.Separator))...)
+		// Find the common prefix
+		i := 0
+		var minLength int
+		if len(previous) < len(current) {
+			minLength = len(previous)
+		} else {
+			minLength = len(current)
+		}
+		for ; i < minLength; i++ {
+			if previous[i] != current[i] {
+				break
 			}
-			// add file node to its nearest parent node
-			if i == len(dirList)-1 {
-				dirNode.AddNodeLink(item.Name, fileNode)
+		}
+		for j := len(previous) - 1; j >= i; j-- {
+			lastNode := layers[len(layers)-1]
+			lastName := previous[len(previous)-1]
+			layers = layers[:len(layers)-1]
+			previous = previous[:len(previous)-1]
+			if j != len(previous)-1 {
+				dagServ.Add(ctx, lastNode)
 			}
-			if i == 0 {
-				parentKey = rootKey
+			layers[len(layers)-1].AddNodeLink(lastName, lastNode)
+		}
+		for j := i; j < len(current); j++ {
+			if j == len(current)-1 {
+				layers = append(layers, node)
 			} else {
-				parentKey = getDirKey(dirList, i-1)
-			}
-			logger.Infof("parentKey: %s", parentKey)
-			parentNode, ok = dirNodeMap[parentKey]
-			if !ok {
-				parentNode = unixfs.EmptyDirNode()
-				parentNode.SetCidBuilder(cidBuilder)
-				dirNodeMap[parentKey] = parentNode
-			}
-			if isLinked(parentNode, dir) {
-				parentNode, err = parentNode.UpdateNodeLink(dir, dirNode)
-				if err != nil {
-					return
-				}
-				dirNodeMap[parentKey] = parentNode
-			} else {
-				parentNode.AddNodeLink(dir, dirNode)
+				newNode := unixfs.EmptyDirNode()
+				newNode.SetCidBuilder(cidBuilder)
+				layers = append(layers, newNode)
 			}
 		}
+		previous = current
 	}
-
-	for _, node := range dirNodeMap {
-		//fmt.Printf("add node to store: %v\n", node)
-		//fmt.Printf("key: %s, links: %v\n", key, len(node.Links()))
-		dagServ.Add(ctx, node)
+	for j := len(previous) - 1; j >= 1; j-- {
+		lastNode := layers[len(layers)-1]
+		lastName := previous[len(previous)-1]
+		layers = layers[:len(layers)-1]
+		previous = previous[:len(previous)-1]
+		if j != len(previous)-1 {
+			dagServ.Add(ctx, lastNode)
+		}
+		layers[len(layers)-1].AddNodeLink(lastName, lastNode)
 	}
-
-	rootNode = dirNodeMap[rootKey]
-	logger.Infof("start to generate car for %s", rootNode.Cid())
-	genCarStartTime := time.Now()
-	//car
+	dagServ.Add(ctx, rootNode)
 	selector := allSelector()
 	sc := car.NewSelectiveCar(ctx, bs2, []car.Dag{{Root: rootNode.Cid(), Selector: selector}})
 	err = sc.Write(output)
-	// cario := cario.NewCarIO()
-	// err = cario.WriteCar(context.Background(), bs2, rootNode.Cid(), selector, carF)
 	if err != nil {
+		logger.Warn(err)
 		return
 	}
-	logger.Infof("generate car file completed, time elapsed: %s", time.Now().Sub(genCarStartTime))
-
 	fsBuilder := NewFSBuilder(rootNode, dagServ)
 	ipldDag, err = fsBuilder.Build()
 	cid = rootNode.Cid().String()
@@ -290,12 +215,13 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 	var r io.Reader
 	f, err := os.Open(item.Path)
 	if err != nil {
-		return nil, err
+		logger.Warn(err)
+		return
 	}
 	r = f
 
 	// read all data of item
-	if item.Start > 0 || item.End > 0 {
+	if item.Start != 0 || item.End != item.Size {
 		r = &fileSlice{
 			r:        f,
 			start:    item.Start,
@@ -313,21 +239,23 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 	}
 	db, err := params.New(chunker.NewSizeSplitter(r, int64(UnixfsChunkSize)))
 	if err != nil {
-		return nil, err
+		logger.Warn(err)
+		return
 	}
 	node, err = balanced.Layout(db)
 	if err != nil {
-		return nil, err
+		logger.Warn(err)
+		return
 	}
 	return
 }
-func (b *FSBuilder) Build() (*FsNode, error) {
+func (b *FSBuilder) Build() (rootn *FsNode, err error) {
 	fsn, err := unixfs.FSNodeFromBytes(b.root.Data())
 	if err != nil {
 		return nil, xerrors.Errorf("input dag is not a unixfs node: %s", err)
 	}
 
-	rootn := &FsNode{
+	rootn = &FsNode{
 		Hash: b.root.Cid().String(),
 		Size: fsn.FileSize(),
 		Link: []FsNode{},
@@ -336,9 +264,11 @@ func (b *FSBuilder) Build() (*FsNode, error) {
 		return rootn, nil
 	}
 	for _, ln := range b.root.Links() {
-		fn, err := b.getNodeByLink(ln)
+		var fn FsNode
+		fn, err = b.getNodeByLink(ln)
 		if err != nil {
-			return nil, err
+			logger.Warn(err)
+			return
 		}
 		rootn.Link = append(rootn.Link, fn)
 	}
@@ -373,7 +303,7 @@ func (b *FSBuilder) getNodeByLink(ln *format.Link) (fn FsNode, err error) {
 	}
 	fsn, err := unixfs.FSNodeFromBytes(nnd.Data())
 	if err != nil {
-		logger.Warnf("input dag is not a unixfs node: %s", err)
+		logger.Warn("input dag is not a unixfs node: %s", err)
 		return
 	}
 	if !fsn.IsDir() {
