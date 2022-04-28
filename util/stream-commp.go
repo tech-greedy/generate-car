@@ -28,17 +28,16 @@ func CalculateCommpHashHash(reader io.Reader, PadPieceSize uint64) (commCid cid.
 		io.TeeReader(reader, cp),
 		BufSize,
 	)
-
 	var streamLen int64
 	// read out remainder into the hasher, if any
 	n, err := io.Copy(ioutil.Discard, streamBuf)
 	streamLen += n
 	if err != nil && err != io.EOF {
-		log.Println("unexpected error at offset %d: %s", streamLen, err)
+		log.Printf("unexpected error at offset %d: %s\n", streamLen, err)
 		return
 	}
 
-	rawCommP, paddedSize, err := cp.Digest()
+	rawCommP, pieceSize, err := cp.Digest()
 	if err != nil {
 		log.Println(err)
 		return
@@ -47,15 +46,14 @@ func CalculateCommpHashHash(reader io.Reader, PadPieceSize uint64) (commCid cid.
 	if PadPieceSize > 0 {
 		rawCommP, err = commp.PadCommP(
 			rawCommP,
-			paddedSize,
+			pieceSize,
 			PadPieceSize,
 		)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		paddedSize = PadPieceSize
-		pieceSize = paddedSize
+		pieceSize = PadPieceSize
 	}
 
 	commCid, err = commcid.DataCommitmentV1ToCID(rawCommP)
