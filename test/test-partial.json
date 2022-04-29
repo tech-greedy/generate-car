@@ -1,9 +1,8 @@
 [
   {
     "Path": "test/test.txt",
-    "Name": "test.txt",
     "Size": 4038,
-    "Start": 1,
-    "End": 4037
+    "Start": 1000,
+    "End": 2000
   }
 ]

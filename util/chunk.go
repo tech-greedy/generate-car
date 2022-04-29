@@ -63,7 +63,6 @@ func isLinked(node *dag.ProtoNode, name string) bool {
 
 type Finfo struct {
 	Path  string
-	Name  string
 	Size  int64
 	Start int64
 	End   int64

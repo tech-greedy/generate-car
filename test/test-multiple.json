@@ -1,14 +1,12 @@
 [
   {
     "Path": "test/test.txt",
-    "Name": "test.txt",
     "Size": 4038,
     "Start": 0,
     "End": 4038
   },
   {
     "Path": "test/test2.txt",
-    "Name": "test2.txt",
     "Size": 3089,
     "Start": 0,
     "End": 3089
