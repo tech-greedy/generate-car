@@ -1,11 +1,9 @@
-.PHONY: build ffi all
+.PHONY: build ffi all test
 
-all: ffi build
+all: build
 
 build:
 	go build -ldflags "-s -w" -o generate-car ./generate-car.go
 
-## FFI
-
-ffi: 
-	./extern/filecoin-ffi/install-filcrypto
+test:
+	bundle2.7 exec rspec -f d

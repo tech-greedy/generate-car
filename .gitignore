@@ -18,3 +18,4 @@ go-generate-car
 
 .idea/
 *.car
+.bundle/

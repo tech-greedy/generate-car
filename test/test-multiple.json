@@ -1,0 +1,14 @@
+[
+  {
+    "Path": "test/test.txt",
+    "Size": 4038,
+    "Start": 0,
+    "End": 4038
+  },
+  {
+    "Path": "test/test2.txt",
+    "Size": 3089,
+    "Start": 0,
+    "End": 3089
+  }
+]
