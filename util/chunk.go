@@ -78,6 +78,10 @@ type fileSlice struct {
 	fileSize int64
 }
 
+func (fs *fileSlice) Close() error {
+	return fs.Close()
+}
+
 func (fs *fileSlice) Read(p []byte) (n int, err error) {
 	if fs.end == 0 {
 		fs.end = fs.fileSize
@@ -215,29 +219,21 @@ func allSelector() ipldprime.Node {
 		Node()
 }
 func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (node ipld.Node, err error) {
-	nocopy := true
 	f, err := os.Open(item.Path)
 	if err != nil {
 		logger.Warn(err)
 		return
 	}
-	stat, err := f.Stat()
-	if err != nil {
-		logger.Warn(err)
-		return
-	}
 	var r io.Reader
-	r, err = files.NewReaderPathFile(item.Path, f, stat)
-
-	// read all data of item
-	if item.Start != 0 || item.End != item.Size {
-		r = &fileSlice{
+	if item.Start == 0 && item.End == item.Size {
+		r, err = files.NewReaderPathFile(item.Path, f, nil)
+	} else {
+		r, err = files.NewReaderPathFile(item.Path, &fileSlice{
 			r:        f,
 			start:    item.Start,
 			end:      item.End,
 			fileSize: item.Size,
-		}
-		nocopy = false
+		}, nil)
 	}
 
 	params := ihelper.DagBuilderParams{
@@ -245,7 +241,7 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 		RawLeaves:  false,
 		CidBuilder: cidBuilder,
 		Dagserv:    bufDs,
-		NoCopy:     nocopy,
+		NoCopy:     true,
 	}
 	db, err := params.New(chunker.NewSizeSplitter(r, int64(UnixfsChunkSize)))
 	if err != nil {
