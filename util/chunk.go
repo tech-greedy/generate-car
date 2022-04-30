@@ -6,9 +6,11 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	dss "github.com/ipfs/go-datastore/sync"
+	"github.com/ipfs/go-filestore"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
 	chunker "github.com/ipfs/go-ipfs-chunker"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	files "github.com/ipfs/go-ipfs-files"
 	format "github.com/ipfs/go-ipld-format"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
@@ -115,7 +117,9 @@ func (fs *fileSlice) Read(p []byte) (n int, err error) {
 }
 
 func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer) (ipldDag *FsNode, cid string, err error) {
-	bs2 := bstore.NewBlockstore(dss.MutexWrap(datastore.NewMapDatastore()))
+	bs1 := bstore.NewBlockstore(dss.MutexWrap(datastore.NewMapDatastore()))
+	fm := filestore.NewFileManager(dss.MutexWrap(datastore.NewMapDatastore()), filepath.Clean(parentPath))
+	bs2 := filestore.NewFilestore(bs1, fm)
 	dagServ := merkledag.NewDAGService(blockservice.New(bs2, offline.Exchange(bs2)))
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
@@ -140,7 +144,7 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 			return
 		}
 		var path string
-		path, err = filepath.Rel(parentPath, filepath.Clean(item.Path))
+		path, err = filepath.Rel(filepath.Clean(parentPath), filepath.Clean(item.Path))
 		if err != nil {
 			logger.Warn(err)
 			return
@@ -211,13 +215,19 @@ func allSelector() ipldprime.Node {
 		Node()
 }
 func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (node ipld.Node, err error) {
-	var r io.Reader
+	nocopy := true
 	f, err := os.Open(item.Path)
 	if err != nil {
 		logger.Warn(err)
 		return
 	}
-	r = f
+	stat, err := f.Stat()
+	if err != nil {
+		logger.Warn(err)
+		return
+	}
+	var r io.Reader
+	r, err = files.NewReaderPathFile(item.Path, f, stat)
 
 	// read all data of item
 	if item.Start != 0 || item.End != item.Size {
@@ -227,6 +237,7 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 			end:      item.End,
 			fileSize: item.Size,
 		}
+		nocopy = false
 	}
 
 	params := ihelper.DagBuilderParams{
@@ -234,7 +245,7 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 		RawLeaves:  false,
 		CidBuilder: cidBuilder,
 		Dagserv:    bufDs,
-		NoCopy:     false,
+		NoCopy:     nocopy,
 	}
 	db, err := params.New(chunker.NewSizeSplitter(r, int64(UnixfsChunkSize)))
 	if err != nil {
