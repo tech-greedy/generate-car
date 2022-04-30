@@ -235,6 +235,10 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 			fileSize: item.Size,
 		}, nil)
 	}
+	if err != nil {
+		logger.Warn(err)
+		return
+	}
 
 	params := ihelper.DagBuilderParams{
 		Maxlinks:   UnixfsLinksPerLevel,
