@@ -121,8 +121,15 @@ func (fs *fileSlice) Read(p []byte) (n int, err error) {
 }
 
 func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer) (ipldDag *FsNode, cid string, err error) {
-	bs1 := bstore.NewBlockstore(dss.MutexWrap(datastore.NewMapDatastore()))
-	fm := filestore.NewFileManager(dss.MutexWrap(datastore.NewMapDatastore()), filepath.Clean(parentPath))
+	batching := dss.MutexWrap(datastore.NewMapDatastore())
+	bs1 := bstore.NewBlockstore(batching)
+	absParentPath, err := filepath.Abs(parentPath)
+	if err != nil {
+		logger.Warn(err)
+		return
+	}
+	fm := filestore.NewFileManager(batching, absParentPath)
+	fm.AllowFiles = true
 	bs2 := filestore.NewFilestore(bs1, fm)
 	dagServ := merkledag.NewDAGService(blockservice.New(bs2, offline.Exchange(bs2)))
 	cidBuilder, err := merkledag.PrefixForCidVersion(1)
@@ -130,20 +137,15 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 		logger.Warn(err)
 		return
 	}
-	layers := []*dag.ProtoNode{}
+	layers := []ipld.Node{}
 	rootNode := unixfs.EmptyDirNode()
 	rootNode.SetCidBuilder(cidBuilder)
 	layers = append(layers, rootNode)
 	previous := []string{""}
 	for _, item := range fileList {
-		var fileNode ipld.Node
-		fileNode, err = BuildFileNode(item, dagServ, cidBuilder)
+		var node ipld.Node
+		node, err = BuildFileNode(item, dagServ, cidBuilder)
 		if err != nil {
-			logger.Warn(err)
-			return
-		}
-		node, ok := fileNode.(*dag.ProtoNode)
-		if !ok {
 			logger.Warn(err)
 			return
 		}
@@ -175,7 +177,13 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 			if j != len(previous)-1 {
 				dagServ.Add(ctx, lastNode)
 			}
-			layers[len(layers)-1].AddNodeLink(lastName, lastNode)
+			dirNode, ok := layers[len(layers)-1].(*dag.ProtoNode)
+			if !ok {
+				err = xerrors.Errorf("node is not proto node")
+				logger.Warn(err)
+				return
+			}
+			dirNode.AddNodeLink(lastName, lastNode)
 		}
 		for j := i; j < len(current); j++ {
 			if j == len(current)-1 {
@@ -196,7 +204,13 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 		if j != len(previous)-1 {
 			dagServ.Add(ctx, lastNode)
 		}
-		layers[len(layers)-1].AddNodeLink(lastName, lastNode)
+		dirNode, ok := layers[len(layers)-1].(*dag.ProtoNode)
+		if !ok {
+			err = xerrors.Errorf("node is not proto node")
+			logger.Warn(err)
+			return
+		}
+		dirNode.AddNodeLink(lastName, lastNode)
 	}
 	dagServ.Add(ctx, rootNode)
 	selector := allSelector()
@@ -242,12 +256,13 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 
 	params := ihelper.DagBuilderParams{
 		Maxlinks:   UnixfsLinksPerLevel,
-		RawLeaves:  false,
+		RawLeaves:  true,
 		CidBuilder: cidBuilder,
 		Dagserv:    bufDs,
 		NoCopy:     true,
 	}
 	db, err := params.New(chunker.NewSizeSplitter(r, int64(UnixfsChunkSize)))
+	db.SetOffset(uint64(item.Start))
 	if err != nil {
 		logger.Warn(err)
 		return
@@ -308,7 +323,7 @@ func (b *FSBuilder) getNodeByLink(ln *format.Link) (fn FsNode, err error) {
 
 	nnd, ok := nd.(*dag.ProtoNode)
 	if !ok {
-		err = xerrors.Errorf("failed to transformed to dag.ProtoNode")
+		// format.Node | merkeldag.RawNode
 		return
 	}
 	fsn, err := unixfs.FSNodeFromBytes(nnd.Data())

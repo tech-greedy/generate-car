@@ -9,14 +9,16 @@ require (
 	github.com/ipfs/go-blockservice v0.3.0
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-datastore v0.5.1
+	github.com/ipfs/go-filestore v1.2.0
 	github.com/ipfs/go-ipfs-blockstore v1.2.0
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipfs-exchange-offline v0.2.0
+	github.com/ipfs/go-ipfs-files v0.0.4
 	github.com/ipfs/go-ipld-cbor v0.0.5
 	github.com/ipfs/go-ipld-format v0.3.0
 	github.com/ipfs/go-log/v2 v2.5.0
 	github.com/ipfs/go-merkledag v0.6.0
-	github.com/ipfs/go-unixfs v0.3.1
+	github.com/ipfs/go-unixfs v0.0.0-00010101000000-000000000000
 	github.com/ipld/go-car v0.3.3
 	github.com/ipld/go-ipld-prime v0.16.0
 	github.com/urfave/cli/v2 v2.4.0
@@ -30,10 +32,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
-	github.com/ipfs/go-filestore v1.2.0 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-exchange-interface v0.1.0 // indirect
-	github.com/ipfs/go-ipfs-files v0.0.4 // indirect
 	github.com/ipfs/go-ipfs-posinfo v0.0.1 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.0 // indirect
@@ -69,4 +69,4 @@ require (
 	lukechampine.com/blake3 v1.1.6 // indirect
 )
 
-replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
+replace github.com/ipfs/go-unixfs => github.com/tech-greedy/go-unixfs v0.3.2-0.20220430222503-e8f92930674d
