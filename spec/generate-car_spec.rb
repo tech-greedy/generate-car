@@ -9,13 +9,13 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeiht76sut7jiu7t5s7tqpjqqbqxbdktquqvm6ae6i3ycpd3astdhu4",
+  "Hash": "bafybeiceqv4l23zs2766j3i2ros3zvatxmanelmnzk753ue525d6j4azgy",
   "Size": 0,
   "Link": [
     {
       "Name": "test.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     }
   ]
@@ -38,18 +38,18 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeiejli24sgljjac23jddo7lr75365djwc3bw3pxuseshye3rwpl7ru",
+  "Hash": "bafybeigivse44aebx2ipou7fvvejjighko4yvtcbrhcuoc4wx6xr2gtdwe",
   "Size": 0,
   "Link": [
     {
       "Name": "test",
-      "Hash": "bafybeiht76sut7jiu7t5s7tqpjqqbqxbdktquqvm6ae6i3ycpd3astdhu4",
-      "Size": 4106,
+      "Hash": "bafybeiceqv4l23zs2766j3i2ros3zvatxmanelmnzk753ue525d6j4azgy",
+      "Size": 4095,
       "Link": [
         {
           "Name": "test.txt",
-          "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-          "Size": 4049,
+          "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+          "Size": 4038,
           "Link": null
         }
       ]
@@ -74,13 +74,13 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeihydll5cng2hfdqblglqohn4dom4raw6nvqplhmml4ufmclydomme",
+  "Hash": "bafybeiejb5tmssizbrxv2p5q5tx34g4d424zylpp6fucp5m7bwiyhqxnxa",
   "Size": 0,
   "Link": [
     {
       "Name": "test.txt",
-      "Hash": "bafybeiaqhlr6oxtkemzq4hiqneyeyus4pb4baboejpue4pcr5t3zt6uvd4",
-      "Size": 1011,
+      "Hash": "bafkreihgspm7pi3bgf44lag72wmqkms27t2et7kbmkvt537p5h4drdgzse",
+      "Size": 1000,
       "Link": null
     }
   ]
@@ -103,19 +103,19 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeif47u62o6b6gsgidfd3rrf3ep5i27oux2db3k6cble3c522fgz73q",
+  "Hash": "bafybeige75p3h2b72aufmsjgtwqppiuf67nvd25vzugpc3xs2ab5gmsfwq",
   "Size": 0,
   "Link": [
     {
       "Name": "test.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     },
     {
       "Name": "test2.txt",
-      "Hash": "bafybeicopdexbrwmpsh7f24htvfbouleocw5fwyaprhubppvtln33hvnl4",
-      "Size": 3100,
+      "Hash": "bafkreihrzwmwtzh7ax25ue4txzeuhrr77a3okuqagez243z4dcd2wlz4my",
+      "Size": 3089,
       "Link": null
     }
   ]
@@ -138,13 +138,13 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeiht76sut7jiu7t5s7tqpjqqbqxbdktquqvm6ae6i3ycpd3astdhu4",
+  "Hash": "bafybeiceqv4l23zs2766j3i2ros3zvatxmanelmnzk753ue525d6j4azgy",
   "Size": 0,
   "Link": [
     {
       "Name": "test.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     }
   ]
@@ -167,17 +167,18 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeiht76sut7jiu7t5s7tqpjqqbqxbdktquqvm6ae6i3ycpd3astdhu4",
+  "Hash": "bafybeiceqv4l23zs2766j3i2ros3zvatxmanelmnzk753ue525d6j4azgy",
   "Size": 0,
   "Link": [
     {
       "Name": "test.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     }
   ]
 }
+
     }
     stdout = `./generate-car -i test/test-smaller.json  -o test -p test`
     result = JSON.parse(stdout)
@@ -195,13 +196,13 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeid2uvf4xvcyejy4xkijbridue6fpj6cfj2pjwvup2kaqo6i6pqyra",
+  "Hash": "bafybeihis3bw7stnssjhnipnvytgduk4yf4wuaumw7fmklxzouvzvo5kyq",
   "Size": 0,
   "Link": [
     {
       "Name": "test-link.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     }
   ]
@@ -259,83 +260,83 @@ describe "GenerateCar" do
     expectIpld = %{
 {
   "Name": "",
-  "Hash": "bafybeidkg76hokygs43l3efymzmnehtvnlcf4soushvgcsv6nrctnwqnxq",
+  "Hash": "bafybeib3roh4zlejbijx3ub2pkvko6szvo3yncqpxh53jlcwabsscvntgy",
   "Size": 0,
   "Link": [
     {
       "Name": "1",
-      "Hash": "bafybeicnjmrmgeigfsdnipna4pfrz5nzezhj6pea2zrdvifs4t5z2hvww4",
-      "Size": 16450,
+      "Hash": "bafybeihul4g4is36a2lvqwd4osksjzcyqr6q3kj6kmlycwgsvrqwvkpuzq",
+      "Size": 16406,
       "Link": [
         {
           "Name": "1",
-          "Hash": "bafybeiddxbwlxz4dkwhepbmvm27mwmyxmjidvktc34szkxduncf3ptcrji",
-          "Size": 8202,
+          "Hash": "bafybeidyv33hivd5ll27m6y7caaskhurr6twoobkl57xrugwpwmr47rcea",
+          "Size": 8180,
           "Link": [
             {
               "Name": "1.txt",
-              "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-              "Size": 4049,
+              "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+              "Size": 4038,
               "Link": null
             },
             {
               "Name": "2.txt",
-              "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-              "Size": 4049,
+              "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+              "Size": 4038,
               "Link": null
             }
           ]
         },
         {
           "Name": "2.txt",
-          "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-          "Size": 4049,
+          "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+          "Size": 4038,
           "Link": null
         },
         {
           "Name": "3.txt",
-          "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-          "Size": 4049,
+          "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+          "Size": 4038,
           "Link": null
         }
       ]
     },
     {
       "Name": "2",
-      "Hash": "bafybeictyxbycd2aaspyrt6qycarigp5tmbvdx3e2vjwsbqcptufgs6jky",
-      "Size": 12451,
+      "Hash": "bafybeigjw26ddnnmqunl4ezbypr7gr55wo7uznlcfh6yp6dt3jmcvnagbi",
+      "Size": 12418,
       "Link": [
         {
           "Name": "1",
-          "Hash": "bafybeicgwqagn6w26db3qkeoriqqhhlrsuxcps765l473hm5h56f27563q",
-          "Size": 12401,
+          "Hash": "bafybeibue5osgywpuwy5waov7cjrdlxrxps3m2znjznm7l73x362attysq",
+          "Size": 12368,
           "Link": [
             {
               "Name": "1.txt",
-              "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-              "Size": 4049,
+              "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+              "Size": 4038,
               "Link": null
             },
             {
               "Name": "2.txt",
-              "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-              "Size": 4049,
+              "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+              "Size": 4038,
               "Link": null
             },
             {
               "Name": "3",
-              "Hash": "bafybeig7civtxfyq4padiisy6ednq5ni4uh4cfkakanpyxtm6ksshfyp64",
-              "Size": 4153,
+              "Hash": "bafybeiavjj7lncrdsu2d5rndsvsqfl6lg4p7hzyisb32il4qoybdtmirwi",
+              "Size": 4142,
               "Link": [
                 {
                   "Name": "1",
-                  "Hash": "bafybeidzjsumvtfrvtt3q5wzse5i5av45ouhwpmivlv4bbpymz3tsxaehi",
-                  "Size": 4103,
+                  "Hash": "bafybeib6gazg7coviekkoakcefjl7wachgqztr3utmw7uohg635ixthhmm",
+                  "Size": 4092,
                   "Link": [
                     {
                       "Name": "1.txt",
-                      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-                      "Size": 4049,
+                      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+                      "Size": 4038,
                       "Link": null
                     }
                   ]
@@ -348,8 +349,8 @@ describe "GenerateCar" do
     },
     {
       "Name": "3.txt",
-      "Hash": "bafybeiake3szbkzabnf6nqtoocwva4k3mmb6sp77ue5tehgne7jjj3nf24",
-      "Size": 4049,
+      "Hash": "bafkreibpk2zxqxtsnbijltzvz5hnsjwgmr6i5dte5fiuri2fgcpf52gtpq",
+      "Size": 4038,
       "Link": null
     }
   ]
