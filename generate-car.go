@@ -6,8 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	commcid "github.com/filecoin-project/go-fil-commcid"
+	"github.com/filecoin-project/go-fil-commp-hashhash"
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
+	cbor "github.com/ipfs/go-ipld-cbor"
 	"github.com/tech-greedy/go-generate-car/util"
 	"github.com/urfave/cli/v2"
 	"io"
@@ -29,6 +32,17 @@ type Result struct {
 }
 
 type Input []util.Finfo
+
+type CarHeader struct {
+	Roots   []cid.Cid
+	Version uint64
+}
+
+func init() {
+	cbor.RegisterCborType(CarHeader{})
+}
+
+const BufSize = (4 << 20) / 128 * 127
 
 func main() {
 	ctx := context.TODO()
@@ -63,7 +77,7 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			inputFile := c.String("input")
-			pieceSize := c.Uint64("piece-size")
+			pieceSizeInput := c.Uint64("piece-size")
 			outDir := c.String("out-dir")
 			parent := c.String("parent")
 			var inputBytes []byte
@@ -94,28 +108,12 @@ func main() {
 			if err != nil {
 				return err
 			}
-			piper, pipew := io.Pipe()
-			ch := make(chan CommpResult)
-			go func() {
-				var commp cid.Cid
-				var p uint64
-				commp, p, err = util.CalculateCommpHashHash(piper, pieceSize)
-				if err != nil {
-					panic(err)
-				}
-				ch <- CommpResult{commp: commp.String(), pieceSize: p}
-			}()
-
-			writer := io.MultiWriter(carF, pipew)
+			cp := new(commp.Calc)
+			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
 			ipld, cid, err := util.GenerateCar(ctx, input, parent, writer)
 			if err != nil {
 				carF.Close()
-				pipew.Close()
 				os.Remove(outPath)
-				return err
-			}
-			err = pipew.Close()
-			if err != nil {
 				return err
 			}
 			err = carF.Close()
@@ -124,14 +122,32 @@ func main() {
 			}
 			err = os.Rename(outPath, path.Join(outDir, cid+".car"))
 			if err != nil {
-				panic(err)
+				return err
 			}
-			commpResult := <-ch
+			rawCommP, pieceSize, err := cp.Digest()
+			if err != nil {
+				return err
+			}
+			if pieceSizeInput > 0 {
+				rawCommP, err = commp.PadCommP(
+					rawCommP,
+					pieceSize,
+					pieceSizeInput,
+				)
+				if err != nil {
+					return err
+				}
+				pieceSize = pieceSizeInput
+			}
+			commCid, err := commcid.DataCommitmentV1ToCID(rawCommP)
+			if err != nil {
+				return err
+			}
 			output, err := json.Marshal(Result{
 				Ipld:      ipld,
 				DataCid:   cid,
-				PieceCid:  commpResult.commp,
-				PieceSize: commpResult.pieceSize,
+				PieceCid:  commCid.String(),
+				PieceSize: pieceSize,
 			})
 			if err != nil {
 				return err
