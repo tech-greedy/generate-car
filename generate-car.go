@@ -112,8 +112,10 @@ func main() {
 			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
 			ipld, cid, err := util.GenerateCar(ctx, input, parent, writer)
 			if err != nil {
-				carF.Close()
-				os.Remove(outPath)
+				return err
+			}
+			err = writer.Flush()
+			if err != nil {
 				return err
 			}
 			err = carF.Close()
