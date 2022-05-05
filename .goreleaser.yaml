@@ -1,0 +1,10 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+builds:
+  - binary: generate-car
+    goos:
+      - linux
+      - windows
+      - darwin
+checksum:
+  name_template: 'checksums.txt'
