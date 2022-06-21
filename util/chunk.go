@@ -120,13 +120,20 @@ func (fs *fileSlice) Read(p []byte) (n int, err error) {
 	return copy(p, b), io.EOF
 }
 
-func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, output io.Writer) (ipldDag *FsNode, cid string, err error) {
+func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDir string, output io.Writer) (ipldDag *FsNode, cid string, err error) {
 	batching := dss.MutexWrap(datastore.NewMapDatastore())
 	bs1 := bstore.NewBlockstore(batching)
 	absParentPath, err := filepath.Abs(parentPath)
 	if err != nil {
 		logger.Warn(err)
 		return
+	}
+	if tmpDir != "" {
+		absParentPath, err = filepath.Abs(tmpDir)
+		if err != nil {
+			logger.Warn(err)
+			return
+		}
 	}
 	fm := filestore.NewFileManager(batching, absParentPath)
 	fm.AllowFiles = true
@@ -143,14 +150,52 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, outpu
 	layers = append(layers, rootNode)
 	previous := []string{""}
 	for _, item := range fileList {
+		if item.End == 0 {
+			item.End = item.Size
+		}
 		var node ipld.Node
+		var path string
+		path, err = filepath.Rel(filepath.Clean(parentPath), filepath.Clean(item.Path))
+		if tmpDir != "" {
+			tmpPath := filepath.Join(filepath.Clean(tmpDir), path)
+			err = os.MkdirAll(filepath.Dir(tmpPath), 0777)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			// copy file
+			source, err := os.Open(item.Path)
+			if err != nil {
+				logger.Warn(err)
+				return nil, "", err
+			}
+			defer source.Close()
+			destination, err := os.Create(tmpPath)
+			if err != nil {
+				logger.Warn(err)
+				return nil, "", err
+			}
+			defer destination.Close()
+			_, err = source.Seek(item.Start, 0)
+			if err != nil {
+				logger.Warn(err)
+				return nil, "", err
+			}
+			_, err = io.CopyN(destination, source, item.End-item.Start)
+			if err != nil {
+				logger.Warn(err)
+				return nil, "", err
+			}
+			item.Path = tmpPath
+			item.Size = item.End - item.Start
+			item.End = item.Size
+			item.Start = 0
+		}
 		node, err = BuildFileNode(item, dagServ, cidBuilder)
 		if err != nil {
 			logger.Warn(err)
 			return
 		}
-		var path string
-		path, err = filepath.Rel(filepath.Clean(parentPath), filepath.Clean(item.Path))
 		if err != nil {
 			logger.Warn(err)
 			return

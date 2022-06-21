@@ -18,6 +18,7 @@ GLOBAL OPTIONS:
    --input value, -i value       File to read list of files, or '-' if from stdin (default: "-")
    --piece-size value, -s value  Target piece size, default to minimum possible value (default: 0)
    --out-dir value, -o value     Output directory to save the car file (default: ".")
+   --tmp-dir value, -t value     Optionally copy the files to a temporary (and much faster) directory
    --parent value, -p value      Parent path of the dataset
    --help, -h                    show help (default: false)
 ```
@@ -37,3 +38,5 @@ The input file can be a text file that contains a list of file infomation. i.e.
   }
 ]
 ```
+
+The tmp dir is useful when the dataset source is on slow storage such as NFS or S3FS/Goofys mount.

@@ -69,6 +69,12 @@ func main() {
 				Value:   ".",
 			},
 			&cli.StringFlag{
+				Name:    "tmp-dir",
+				Aliases: []string{"t"},
+				Usage:   "Optionally copy the files to a temporary (and much faster) directory",
+				Value:   "",
+			},
+			&cli.StringFlag{
 				Name:     "parent",
 				Aliases:  []string{"p"},
 				Usage:    "Parent path of the dataset",
@@ -80,6 +86,7 @@ func main() {
 			pieceSizeInput := c.Uint64("piece-size")
 			outDir := c.String("out-dir")
 			parent := c.String("parent")
+			tmpDir := c.String("tmp-dir")
 			var inputBytes []byte
 			if inputFile == "-" {
 				reader := bufio.NewReader(os.Stdin)
@@ -110,7 +117,7 @@ func main() {
 			}
 			cp := new(commp.Calc)
 			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
-			ipld, cid, err := util.GenerateCar(ctx, input, parent, writer)
+			ipld, cid, err := util.GenerateCar(ctx, input, parent, tmpDir, writer)
 			if err != nil {
 				return err
 			}

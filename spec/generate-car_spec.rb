@@ -21,7 +21,7 @@ describe "GenerateCar" do
   ]
 }
     }
-    stdout = `./generate-car -i test/test.json  -o test -p test`
+    stdout = `./generate-car -i test/test.json  -o test -p test -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
@@ -57,7 +57,7 @@ describe "GenerateCar" do
   ]
 }
     }
-    stdout = `./generate-car -i test/test.json -o test -p .`
+    stdout = `./generate-car -i test/test.json -o test -p . -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
@@ -86,7 +86,7 @@ describe "GenerateCar" do
   ]
 }
     }
-    stdout = `./generate-car -i test/test-partial.json  -o test -p test`
+    stdout = `./generate-car -i test/test-partial.json  -o test -p test -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
@@ -121,7 +121,7 @@ describe "GenerateCar" do
   ]
 }
     }
-    stdout = `./generate-car -i test/test-multiple.json  -o test -p test`
+    stdout = `./generate-car -i test/test-multiple.json  -o test -p test -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
@@ -208,7 +208,7 @@ describe "GenerateCar" do
   ]
 }
     }
-    stdout = `./generate-car -i test/test-link.json  -o test -p test`
+    stdout = `./generate-car -i test/test-link.json  -o test -p test -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
@@ -356,7 +356,7 @@ describe "GenerateCar" do
   ]
 }
         }
-    stdout = `./generate-car -i generated_test/test.json  -o test -p generated_test`
+    stdout = `./generate-car -i generated_test/test.json  -o test -p generated_test -t tmpdir`
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
