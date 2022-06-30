@@ -233,6 +233,23 @@ describe "GenerateCar" do
     expect($?.exitstatus).to eq(1)
   end
 
+  it 'should work with large number of sub files' do
+    base = 'subfiles_test'
+    FileUtils.mkdir_p(File.join(base, 'subfolders'))
+    json = (10000..20000).map do |i|
+        path = File.join(base, "subfolders/#{i}.txt")
+        File.write(path, "Hello World #{i}")
+        {
+            "Path" => path,
+            "Size" => File.size(path)
+        }
+    end
+    File.write('subfiles_test/test.json', JSON.generate(json))
+    stdout = `./generate-car -i subfiles_test/test.json  -o test -p subfiles_test`
+    result = JSON.parse(stdout)
+    expect(JSON.generate(result)).to eq(JSON.generate(JSON.parse(File.read('test/test-dynamic-folder.json'))))
+  end
+
   it 'should handle complicated file structure' do
     base = 'generated_test'
     FileUtils.mkdir_p(base)

@@ -24,7 +24,7 @@ func TestGenerateCar(t *testing.T) {
 			Start: 1,
 			End:   4038,
 		},
-	}, "../test", carF)
+	}, "../", "", carF)
 	fmt.Println(dag)
 	fmt.Println(cid)
 	fmt.Println(err)

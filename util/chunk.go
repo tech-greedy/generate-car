@@ -19,6 +19,7 @@ import (
 	"github.com/ipfs/go-unixfs"
 	"github.com/ipfs/go-unixfs/importer/balanced"
 	ihelper "github.com/ipfs/go-unixfs/importer/helpers"
+	uio "github.com/ipfs/go-unixfs/io"
 	"github.com/ipld/go-car"
 	ipldprime "github.com/ipld/go-ipld-prime"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
@@ -144,10 +145,10 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 		logger.Warn(err)
 		return
 	}
-	layers := []ipld.Node{}
-	rootNode := unixfs.EmptyDirNode()
+	var layers []interface{}
+	rootNode := uio.NewDirectory(dagServ)
 	rootNode.SetCidBuilder(cidBuilder)
-	layers = append(layers, rootNode)
+	layers = append(layers, &rootNode)
 	previous := []string{""}
 	for _, item := range fileList {
 		if item.End == 0 {
@@ -191,7 +192,7 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 			item.End = item.Size
 			item.Start = 0
 		}
-		node, err = BuildFileNode(item, dagServ, cidBuilder)
+		node, err = BuildFileNode(ctx, item, dagServ, cidBuilder)
 		if err != nil {
 			logger.Warn(err)
 			return
@@ -219,24 +220,37 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 			lastName := previous[len(previous)-1]
 			layers = layers[:len(layers)-1]
 			previous = previous[:len(previous)-1]
-			if j != len(previous)-1 {
-				dagServ.Add(ctx, lastNode)
-			}
-			dirNode, ok := layers[len(layers)-1].(*dag.ProtoNode)
+			dirNode, ok := layers[len(layers)-1].(*uio.Directory)
 			if !ok {
-				err = xerrors.Errorf("node is not proto node")
-				logger.Warn(err)
+				err = xerrors.Errorf("node is not directory")
 				return
 			}
-			dirNode.AddNodeLink(lastName, lastNode)
+			lastDirNode, ok := lastNode.(*uio.Directory)
+			if ok {
+				n, err := (*lastDirNode).GetNode()
+				if err != nil {
+					return nil, "", err
+				}
+				dagServ.Add(ctx, n)
+				err = (*dirNode).AddChild(ctx, lastName, n)
+				if err != nil {
+					return nil, "", err
+				}
+			} else {
+				lastFileNode, _ := lastNode.(ipld.Node)
+				err = (*dirNode).AddChild(ctx, lastName, lastFileNode)
+				if err != nil {
+					return nil, "", err
+				}
+			}
 		}
 		for j := i; j < len(current); j++ {
 			if j == len(current)-1 {
 				layers = append(layers, node)
 			} else {
-				newNode := unixfs.EmptyDirNode()
+				newNode := uio.NewDirectory(dagServ)
 				newNode.SetCidBuilder(cidBuilder)
-				layers = append(layers, newNode)
+				layers = append(layers, &newNode)
 			}
 		}
 		previous = current
@@ -246,28 +260,47 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 		lastName := previous[len(previous)-1]
 		layers = layers[:len(layers)-1]
 		previous = previous[:len(previous)-1]
-		if j != len(previous)-1 {
-			dagServ.Add(ctx, lastNode)
-		}
-		dirNode, ok := layers[len(layers)-1].(*dag.ProtoNode)
+		dirNode, ok := layers[len(layers)-1].(*uio.Directory)
 		if !ok {
-			err = xerrors.Errorf("node is not proto node")
-			logger.Warn(err)
-			return
+			err = xerrors.Errorf("node is not directory")
+			return nil, "", err
 		}
-		dirNode.AddNodeLink(lastName, lastNode)
+		lastDirNode, ok := lastNode.(*uio.Directory)
+		if ok {
+			n, err := (*lastDirNode).GetNode()
+			if err != nil {
+				return nil, "", err
+			}
+			dagServ.Add(ctx, n)
+			err = (*dirNode).AddChild(ctx, lastName, n)
+			if err != nil {
+				return nil, "", err
+			}
+		} else {
+			lastFileNode, _ := lastNode.(ipld.Node)
+			err = (*dirNode).AddChild(ctx, lastName, lastFileNode)
+			if err != nil {
+				return nil, "", err
+			}
+		}
 	}
-	dagServ.Add(ctx, rootNode)
+	rootIpldNode, _ := rootNode.GetNode()
+	dagServ.Add(ctx, rootIpldNode)
 	selector := allSelector()
-	sc := car.NewSelectiveCar(ctx, bs2, []car.Dag{{Root: rootNode.Cid(), Selector: selector}})
+	sc := car.NewSelectiveCar(ctx, bs2, []car.Dag{{Root: rootIpldNode.Cid(), Selector: selector}})
 	err = sc.Write(output)
 	if err != nil {
 		logger.Warn(err)
 		return
 	}
-	fsBuilder := NewFSBuilder(rootNode, dagServ)
+	rootProtoNode, ok := rootIpldNode.(*dag.ProtoNode)
+	if !ok {
+		err = xerrors.Errorf("node is not proto node")
+		return
+	}
+	fsBuilder := NewFSBuilder(rootProtoNode, dagServ)
 	ipldDag, err = fsBuilder.Build()
-	cid = rootNode.Cid().String()
+	cid = rootIpldNode.Cid().String()
 	return
 }
 
@@ -277,7 +310,7 @@ func allSelector() ipldprime.Node {
 		ssb.ExploreAll(ssb.ExploreRecursiveEdge())).
 		Node()
 }
-func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (node ipld.Node, err error) {
+func BuildFileNode(ctx context.Context, item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (node ipld.Node, err error) {
 	f, err := os.Open(item.Path)
 	if err != nil {
 		logger.Warn(err)
@@ -317,6 +350,7 @@ func BuildFileNode(item Finfo, bufDs ipld.DAGService, cidBuilder cid.Builder) (n
 		logger.Warn(err)
 		return
 	}
+	bufDs.Add(ctx, node)
 	return
 }
 func (b *FSBuilder) Build() (rootn *FsNode, err error) {
