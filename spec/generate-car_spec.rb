@@ -26,7 +26,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -63,7 +63,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -93,7 +93,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -129,7 +129,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -158,7 +158,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -187,7 +187,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -214,7 +214,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)
@@ -379,7 +379,7 @@ describe "GenerateCar" do
     result = JSON.parse(stdout)
     expectDataCid = JSON.parse(expectIpld)['Hash']
     expect(result['DataCid']).to eq(expectDataCid)
-    streamCommpResult = `cat test/#{expectDataCid}.car | ~/go/bin/stream-commp 2>&1`
+    streamCommpResult = `cat test/#{result['PieceCid']}.car | ~/go/bin/stream-commp 2>&1`
     expectCommp = streamCommpResult.lines.find{|line|line.include?'CommPCid'}.strip.split(' ')[1]
     expectPieceSize = streamCommpResult.lines.find{|line|line.include?'Padded piece'}.strip.split(' ')[-2].to_i
     expect(result['PieceCid']).to eq(expectCommp)

@@ -130,10 +130,6 @@ func main() {
 			if err != nil {
 				return err
 			}
-			err = os.Rename(outPath, path.Join(outDir, cid+".car"))
-			if err != nil {
-				return err
-			}
 			rawCommP, pieceSize, err := cp.Digest()
 			if err != nil {
 				return err
@@ -150,6 +146,10 @@ func main() {
 				pieceSize = pieceSizeInput
 			}
 			commCid, err := commcid.DataCommitmentV1ToCID(rawCommP)
+			if err != nil {
+				return err
+			}
+			err = os.Rename(outPath, path.Join(outDir, commCid.String()+".car"))
 			if err != nil {
 				return err
 			}
