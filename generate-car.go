@@ -29,6 +29,7 @@ type Result struct {
 	DataCid   string
 	PieceCid  string
 	PieceSize uint64
+	CidMap    map[string]util.CidMapValue
 }
 
 type Input []util.Finfo
@@ -117,7 +118,7 @@ func main() {
 			}
 			cp := new(commp.Calc)
 			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
-			ipld, cid, err := util.GenerateCar(ctx, input, parent, tmpDir, writer)
+			ipld, cid, cidMap, err := util.GenerateCar(ctx, input, parent, tmpDir, writer)
 			if err != nil {
 				return err
 			}
@@ -157,6 +158,7 @@ func main() {
 				DataCid:   cid,
 				PieceCid:  commCid.String(),
 				PieceSize: pieceSize,
+				CidMap:    cidMap,
 			})
 			if err != nil {
 				return err

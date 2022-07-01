@@ -23,14 +23,14 @@ GLOBAL OPTIONS:
    --help, -h                    show help (default: false)
 ```
 
-The input file can be a text file that contains a list of file infomation. i.e.
+The input file can be a text file that contains a list of file information SORTED by the path. i.e.
 ```json
 [
   {
     "Path": "test/test.txt",
     "Size": 4038,
-    "Start": 1000,
-    "End": 2000
+    "Start": 1000, # Inclusive
+    "End": 2000 # Exclusive
   },
   {
     "Path": "test/test2.txt",
