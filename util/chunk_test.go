@@ -17,15 +17,16 @@ func (nw *noopWriter) Write(p []byte) (n int, err error) {
 func TestGenerateCar(t *testing.T) {
 	fmt.Println(os.Getwd())
 	carF, err := os.Create("../test/test.car")
-	dag, cid, err := GenerateCar(context.TODO(), []Finfo{
+	dag, cid, cidMap, err := GenerateCar(context.TODO(), []Finfo{
 		{
 			Path:  "../test/test.txt",
 			Size:  4038,
 			Start: 1,
 			End:   4038,
 		},
-	}, "../test", carF)
+	}, "../", "", carF)
 	fmt.Println(dag)
 	fmt.Println(cid)
 	fmt.Println(err)
+	fmt.Println(cidMap)
 }
