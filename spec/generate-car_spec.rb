@@ -4,6 +4,8 @@ describe "GenerateCar" do
   after :each do
     FileUtils.rm_f(Dir['test/*.car'])
     FileUtils.rm_rf('generated_test')
+    FileUtils.rm_rf('subfiles_test')
+    FileUtils.rm_rf('tmpdir')
   end
   it 'should work for single file input' do
     expectIpld = %{
