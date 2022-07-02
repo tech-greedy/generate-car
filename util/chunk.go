@@ -203,7 +203,7 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 		}
 		node, err = BuildFileNode(ctx, item, dagServ, cidBuilder)
 		dagServ.Add(ctx, node)
-		cidMap[strings.Join(filepath.SplitList(path), "/")] = CidMapValue{false, node.Cid().String()}
+		cidMap[strings.Join(strings.Split(path, string(filepath.Separator)), "/")] = CidMapValue{false, node.Cid().String()}
 		if err != nil {
 			logger.Warn(err)
 			return
