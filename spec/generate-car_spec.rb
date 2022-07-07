@@ -7,6 +7,14 @@ describe "GenerateCar" do
     FileUtils.rm_rf('subfiles_test')
     FileUtils.rm_rf('tmpdir')
   end
+  it 'should return expected error for non existing file' do
+    stdout = `./generate-car -i test/test-overflow.json  -o test -p test -t tmpdir 2>&1`
+    expect(stdout).to include 'EOF'
+  end
+  it 'should return expected error for non existing file' do
+    stdout = `./generate-car -i test/test-nonexisting.json  -o test -p test -t tmpdir 2>&1`
+    expect(stdout).to include 'no such file'
+  end
   it 'should work for single file input' do
     expectIpld = %{
 {

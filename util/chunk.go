@@ -174,27 +174,24 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 				return
 			}
 			// copy file
-			source, err := os.Open(item.Path)
+			var source, destination *os.File
+			source, err = os.Open(item.Path)
 			if err != nil {
-				logger.Warn(err)
-				return nil, "", nil, err
+				return
 			}
 			defer source.Close()
-			destination, err := os.Create(tmpPath)
+			destination, err = os.Create(tmpPath)
 			if err != nil {
-				logger.Warn(err)
-				return nil, "", nil, err
+				return
 			}
 			defer destination.Close()
 			_, err = source.Seek(item.Start, 0)
 			if err != nil {
-				logger.Warn(err)
-				return nil, "", nil, err
+				return
 			}
 			_, err = io.CopyN(destination, source, item.End-item.Start)
 			if err != nil {
-				logger.Warn(err)
-				return nil, "", nil, err
+				return
 			}
 			item.Path = tmpPath
 			item.Size = item.End - item.Start
@@ -202,16 +199,14 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 			item.Start = 0
 		}
 		node, err = BuildFileNode(ctx, item, dagServ, cidBuilder)
-		dagServ.Add(ctx, node)
+		if err != nil {
+			return
+		}
+		err = dagServ.Add(ctx, node)
+		if err != nil {
+			return
+		}
 		cidMap[strings.Join(strings.Split(path, string(filepath.Separator)), "/")] = CidMapValue{false, node.Cid().String()}
-		if err != nil {
-			logger.Warn(err)
-			return
-		}
-		if err != nil {
-			logger.Warn(err)
-			return
-		}
 		current := append([]string{""}, strings.Split(path, string(filepath.Separator))...)
 		// Find the common prefix
 		i := 0
@@ -237,11 +232,15 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 			}
 			lastDirNode, ok := lastNode.(*uio.Directory)
 			if ok {
-				n, err := (*lastDirNode).GetNode()
+				var n ipld.Node
+				n, err = (*lastDirNode).GetNode()
 				if err != nil {
-					return nil, "", nil, err
+					return
 				}
-				dagServ.Add(ctx, n)
+				err = dagServ.Add(ctx, n)
+				if err != nil {
+					return
+				}
 				cidMap[strings.Join(previous[1:], "/")] = CidMapValue{true, n.Cid().String()}
 				err = (*dirNode).AddChild(ctx, lastName, n)
 				if err != nil {
@@ -274,37 +273,43 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 		dirNode, ok := layers[len(layers)-1].(*uio.Directory)
 		if !ok {
 			err = xerrors.Errorf("node is not directory")
-			return nil, "", nil, err
+			return
 		}
 		lastDirNode, ok := lastNode.(*uio.Directory)
 		if ok {
-			n, err := (*lastDirNode).GetNode()
+			var n ipld.Node
+			n, err = (*lastDirNode).GetNode()
 			if err != nil {
-				return nil, "", nil, err
+				return
 			}
-			dagServ.Add(ctx, n)
+			err = dagServ.Add(ctx, n)
+			if err != nil {
+				return
+			}
 			cidMap[strings.Join(previous[1:], "/")] = CidMapValue{true, n.Cid().String()}
 			err = (*dirNode).AddChild(ctx, lastName, n)
 			if err != nil {
-				return nil, "", nil, err
+				return
 			}
 		} else {
 			lastFileNode, _ := lastNode.(ipld.Node)
 			err = (*dirNode).AddChild(ctx, lastName, lastFileNode)
 			if err != nil {
-				return nil, "", nil, err
+				return
 			}
 		}
 		previous = previous[:len(previous)-1]
 	}
 	rootIpldNode, _ := rootNode.GetNode()
-	dagServ.Add(ctx, rootIpldNode)
+	err = dagServ.Add(ctx, rootIpldNode)
+	if err != nil {
+		return
+	}
 	cidMap[""] = CidMapValue{true, rootIpldNode.Cid().String()}
 	selector := allSelector()
 	sc := car.NewSelectiveCar(ctx, bs2, []car.Dag{{Root: rootIpldNode.Cid(), Selector: selector}})
 	err = sc.Write(output)
 	if err != nil {
-		logger.Warn(err)
 		return
 	}
 	rootProtoNode, ok := rootIpldNode.(*dag.ProtoNode)
@@ -314,6 +319,9 @@ func GenerateCar(ctx context.Context, fileList []Finfo, parentPath string, tmpDi
 	}
 	fsBuilder := NewFSBuilder(rootProtoNode, dagServ)
 	ipldDag, err = fsBuilder.Build()
+	if err != nil {
+		return
+	}
 	cid = rootIpldNode.Cid().String()
 	return
 }
