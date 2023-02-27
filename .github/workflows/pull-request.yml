@@ -27,7 +27,7 @@ jobs:
         run: go install github.com/filecoin-project/go-fil-commp-hashhash/cmd/stream-commp@fe93a7f
 
       - name: Install Ruby
-        run: sudo apt-get update && sudo apt install ruby && sudo gem install bundler
+        run: sudo apt-get update && sudo apt install ruby && sudo gem install bundler -v 2.1.2
 
       - name: Install Ruby RSpec
         run: bundle install --path .bundle
