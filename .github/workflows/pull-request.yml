@@ -30,7 +30,7 @@ jobs:
         run: sudo apt-get update && sudo apt install ruby && sudo gem install bundler
 
       - name: Install Ruby RSpec
-        run: bundle2.7 install --path .bundle
+        run: bundle install --path .bundle
 
       - name: Run regression test
         run: make test
