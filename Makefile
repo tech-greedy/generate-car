@@ -6,4 +6,4 @@ build:
 	go build -ldflags "-s -w" -o generate-car ./generate-car.go
 
 test:
-	bundle2.7 exec rspec -f d
+	bundle exec rspec -f d
