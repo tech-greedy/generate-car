@@ -1,4 +1,4 @@
-module github.com/tech-greedy/go-generate-car
+module github.com/tech-greedy/generate-car
 
 go 1.17
 

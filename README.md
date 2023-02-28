@@ -1,10 +1,16 @@
-# go-generate-car
+# generate-car
 A simple CLI to generate car file and compute commp at the same time.
 
-[![Pull Request](https://github.com/tech-greedy/go-generate-car/actions/workflows/pull-request.yml/badge.svg)](https://github.com/tech-greedy/go-generate-car/actions/workflows/pull-request.yml)
+[![Pull Request](https://github.com/tech-greedy/generate-car/actions/workflows/pull-request.yml/badge.svg)](https://github.com/tech-greedy/generate-car/actions/workflows/pull-request.yml)
 
+### Installation
 ```shell
-$ ./generate-car -h
+$ go install github.com/tech-greedy/generate-car
+```
+
+### Usage
+```shell
+$ generate-car -h
 NAME:
    generate-car - generate car archive from list of files and compute commp in the mean time
 
@@ -27,9 +33,9 @@ GLOBAL OPTIONS:
 When `--single` is specified, the input is a single file or folder to be included in full, instead of a spec JSON.
 ```shell
 # Generate car file from a single file
-$ ./generate-car --single -i test_path/test_file. -o out_dir -p test_path
+$ generate-car --single -i test_path/test_file. -o out_dir -p test_path
 # Generate car file from a single folder
-$ ./generate-car --single -i test_path/test_folder -o out_dir -p test_path
+$ generate-car --single -i test_path/test_folder -o out_dir -p test_path
 ```
 
 For advanced user, without specifying `--single` the input file needs to be a json file that contains a list of file information SORTED by the path. This is useful if you only want to include specific files within a directory or only part of a large file. i.e.
