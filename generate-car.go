@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 
 	commcid "github.com/filecoin-project/go-fil-commcid"
 	"github.com/filecoin-project/go-fil-commp-hashhash"
@@ -54,12 +55,12 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "single",
-				Usage: "When enabled, it indicates that the input is a single file to be included in full, instead of a spec JSON",
+				Usage: "When enabled, it indicates that the input is a single file or folder to be included in full, instead of a spec JSON",
 			},
 			&cli.StringFlag{
 				Name:    "input",
 				Aliases: []string{"i"},
-				Usage:   "File to read list of files, or '-' if from stdin",
+				Usage:   "When --single is specified, this is the file or folder to be included in full. Otherwise this is a JSON file containing the list of files to be included in the car archive",
 				Value:   "-",
 			},
 			&cli.Uint64Flag{
@@ -101,12 +102,33 @@ func main() {
 				if err != nil {
 					return err
 				}
-				input = append(input, util.Finfo{
-					Path:  inputFile,
-					Size:  stat.Size(),
-					Start: 0,
-					End:   stat.Size(),
-				})
+				if stat.IsDir() {
+					err := filepath.Walk(inputFile, func(path string, info os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+						if info.IsDir() {
+							return nil
+						}
+						input = append(input, util.Finfo{
+							Path:  path,
+							Size:  info.Size(),
+							Start: 0,
+							End:   info.Size(),
+						})
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+				} else {
+					input = append(input, util.Finfo{
+						Path:  inputFile,
+						Size:  stat.Size(),
+						Start: 0,
+						End:   stat.Size(),
+					})
+				}
 			} else {
 				var inputBytes []byte
 				if inputFile == "-" {

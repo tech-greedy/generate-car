@@ -15,7 +15,8 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --input value, -i value       File to read list of files, or '-' if from stdin (default: "-")
+   --single                      When enabled, it indicates that the input is a single file or folder to be included in full, instead of a spec JSON (default: false)
+   --input value, -i value       When --single is specified, this is the file or folder to be included in full. Otherwise this is a JSON file containing the list of files to be included in the car archive (default: "-")
    --piece-size value, -s value  Target piece size, default to minimum possible value (default: 0)
    --out-dir value, -o value     Output directory to save the car file (default: ".")
    --tmp-dir value, -t value     Optionally copy the files to a temporary (and much faster) directory
@@ -23,7 +24,15 @@ GLOBAL OPTIONS:
    --help, -h                    show help (default: false)
 ```
 
-The input file can be a text file that contains a list of file information SORTED by the path. i.e.
+When `--single` is specified, the input is a single file or folder to be included in full, instead of a spec JSON.
+```shell
+# Generate car file from a single file
+$ ./generate-car --single -i test_path/test_file. -o out_dir -p test_path
+# Generate car file from a single folder
+$ ./generate-car --single -i test_path/test_folder -o out_dir -p test_path
+```
+
+For advanced user, without specifying `--single` the input file needs to be a json file that contains a list of file information SORTED by the path. This is useful if you only want to include specific files within a directory or only part of a large file. i.e.
 ```json
 [
   {
@@ -39,4 +48,7 @@ The input file can be a text file that contains a list of file information SORTE
 ]
 ```
 
-The tmp dir is useful when the dataset source is on slow storage such as NFS or S3FS/Goofys mount.
+The output JSON dump contains `DataCid`, `PieceCid` and `PieceSize` which can be used to make a deal with Filecoin storage providers.
+
+All files are read twice hence if the dataset source is on slow storage such as NFS or S3FS/Goofys mount, you may use tmpdir to copy the files to a fast local directory first.
+
