@@ -5,12 +5,14 @@ A simple CLI to generate car file and compute commp at the same time.
 
 ### Installation
 ```shell
-$ go install github.com/tech-greedy/generate-car
+$ git clone https://github.com/tech-greedy/generate-car.git
+$ cd generate-car
+$ go build
 ```
 
 ### Usage
 ```shell
-$ generate-car -h
+$ ./generate-car -h
 NAME:
    generate-car - generate car archive from list of files and compute commp in the mean time
 
