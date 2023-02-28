@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
-	"github.com/tech-greedy/go-generate-car/util"
+	"github.com/tech-greedy/generate-car/util"
 	"github.com/urfave/cli/v2"
 )
 
