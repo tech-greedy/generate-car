@@ -1,13 +1,15 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
 builds:
-  - binary: generate-car
+  - id: generate-car
+    binary: generate-car
     main: ./cmd/generate-car
     goos:
       - linux
       - windows
       - darwin
-  - binary: generate-ipld-car
+  - id: generate-ipld-car
+    binary: generate-ipld-car
     main: ./cmd/generate-ipld-car
     goos:
       - linux
