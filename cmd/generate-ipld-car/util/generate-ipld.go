@@ -41,45 +41,46 @@ type FsEntry struct {
 	SubEntries map[string]*FsEntry
 }
 
-func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeNodes []cid.Cid) (ipld.Node, error) {
+func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeNodes []cid.Cid) (ipld.Node, []cid.Cid, error) {
 	cidBuilder := merkledag.V1CidPrefix()
 	switch entry.Type {
 	case Dir:
 		dir := uio.NewDirectory(dagServ)
 		dir.SetCidBuilder(cidBuilder)
 		for name, subEntry := range entry.SubEntries {
-			subNode, err := getNode(ctx, subEntry, dagServ, fakeNodes)
+			subNode, newFakeNodes, err := getNode(ctx, subEntry, dagServ, fakeNodes)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get node for sub entry %s", name)
+				return nil, nil, errors.Wrapf(err, "failed to get node for sub entry %s", name)
 			}
+			fakeNodes = newFakeNodes
 			err = dir.AddChild(ctx, name, subNode)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to add child %s to directory", name)
+				return nil, nil, errors.Wrapf(err, "failed to add child %s to directory", name)
 			}
 		}
 		node, err := dir.GetNode()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get node from directory")
+			return nil, nil, errors.Wrap(err, "failed to get node from directory")
 		}
 		err = dagServ.Add(ctx, node)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to add node to dag service")
+			return nil, nil, errors.Wrap(err, "failed to add node to dag service")
 		}
-		return node, nil
+		return node, fakeNodes, nil
 	case File:
 		if len(entry.Chunks) == 1 {
 			cid, err := cid.Parse(entry.Chunks[0].Cid)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse cid")
+				return nil, nil, errors.Wrap(err, "failed to parse cid")
 			}
 			node := NewFakeFSNode(entry.Chunks[0].Size, cid)
 			// Add to dag service temporarily and delete later because this is a fake node
 			err = dagServ.Add(ctx, node)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to add node to dag service")
+				return nil, nil, errors.Wrap(err, "failed to add node to dag service")
 			}
 			fakeNodes = append(fakeNodes, cid)
-			return &node, nil
+			return &node, fakeNodes, nil
 		} else {
 			node := unixfs.NewFSNode(unixfs_pb.Data_File)
 			var links []ipld.Link
@@ -87,7 +88,7 @@ func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeN
 				size := chunk.End - chunk.Start
 				cid, err := cid.Parse(chunk.Cid)
 				if err != nil {
-					return nil, errors.Wrap(err, "failed to parse cid")
+					return nil, nil, errors.Wrap(err, "failed to parse cid")
 				}
 				links = append(links, ipld.Link{
 					Name: "",
@@ -98,24 +99,24 @@ func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeN
 			}
 			nodeBytes, err := node.GetBytes()
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to get bytes from fs node")
+				return nil, nil, errors.Wrap(err, "failed to get bytes from fs node")
 			}
 			pbNode := merkledag.NodeWithData(nodeBytes)
 			pbNode.SetCidBuilder(merkledag.V1CidPrefix())
 			for _, link := range links {
 				err = pbNode.AddRawLink("", &link)
 				if err != nil {
-					return nil, errors.Wrap(err, "failed to add link to node")
+					return nil, nil, errors.Wrap(err, "failed to add link to node")
 				}
 			}
 			err = dagServ.Add(ctx, pbNode)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to add node to dag service")
+				return nil, nil, errors.Wrap(err, "failed to add node to dag service")
 			}
-			return pbNode, nil
+			return pbNode, fakeNodes, nil
 		}
 	}
-	return nil, errors.New("invalid entry type")
+	return nil, nil, errors.New("invalid entry type")
 }
 
 func GenerateIpldCar(ctx context.Context, input io.Reader, parent string, writer io.Writer) (cid.Cid, error) {
@@ -182,12 +183,12 @@ func GenerateIpldCar(ctx context.Context, input io.Reader, parent string, writer
 
 	// Now iterate over the tree and create the IPLD nodes
 	fakeNodes := make([]cid.Cid, 0)
-	rootNode, err := getNode(ctx, &rootDir, dagServ, fakeNodes)
+	rootNode, newFakeNodes, err := getNode(ctx, &rootDir, dagServ, fakeNodes)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "failed to get root node")
 	}
 	// Remove the fake nodes from dag service so that they don't get written to the car file
-	err = dagServ.RemoveMany(ctx, fakeNodes)
+	err = dagServ.RemoveMany(ctx, newFakeNodes)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "failed to remove fake nodes from dag service")
 	}
