@@ -1,5 +1,99 @@
 require 'json'
 require 'fileutils'
+
+def importToIpfs(path)
+  out = `ipfs add -Q --cid-version=1 #{path}`
+  out.strip
+end
+
+describe "GenerateIpldCar" do
+  after :each do
+    FileUtils.rm_rf('test_ipld')
+    FileUtils.rm_rf('test_output')
+    FileUtils.rm_rf('test_ipld_out')
+  end
+
+  it 'should be able to resolve file via ipfs' do
+    # Start IPFS daemon
+    ipfs = Thread.new { system('ipfs daemon') }
+    sleep 5
+
+    numberOfFiles = 10000
+    cidMap = {}
+
+    # Create a directory with a subdirectory that contains 10k small files
+    FileUtils.mkdir_p('test_ipld/test_small_files')
+    FileUtils.mkdir_p('test_output')
+    numberOfFiles.times do |i|
+      path = "test_ipld/test_small_files/#{i}.txt"
+      File.write(path, i.to_s)
+      cidMap[path] = importToIpfs(path)
+    end
+
+    # Create a directory with 10k subdirectories, each containing a single file
+    FileUtils.mkdir_p('test_ipld/test_many_dirs')
+    numberOfFiles.times do |i|
+      FileUtils.mkdir_p("test_ipld/test_many_dirs/#{i}")
+      path = "test_ipld/test_many_dirs/#{i}/#{i}.txt"
+      File.write(path, i.to_s)
+      cidMap[path] = importToIpfs(path)
+    end
+
+    # Create a file that is 100MB in size and the content randomly generated from a constant seed
+    File.open('test_ipld/test_large_file.txt', 'wb') do |f|
+      f.write(Random.new(0).bytes(100_000_000))
+    end
+    cidMap['test_ipld/test_large_file.txt'] = importToIpfs('test_ipld/test_large_file.txt')
+
+    # Create a few files that are 1MB in size and the content randomly generated from a constant seed
+    content = ''
+    10.times do |i|
+      path = "test_ipld/test_many_files_#{i}.txt"
+      File.open(path, 'wb') do |f|
+        fileContent = Random.new(i).bytes(1_000_000)
+        content += fileContent
+        f.write(fileContent)
+      end
+      cidMap[path] = importToIpfs(path)
+    end
+
+    # Create a file that comes from all aggregated content of above files
+    File.open('test_ipld/test_aggregated_file.txt', 'wb') do |f|
+      f.write(content)
+    end
+
+    # Create the input for generate-ipld-car
+    File.open('test_output/test.ndjson', 'w') do |f|
+      cidMap.each do |path, cid|
+        size = File.size(path)
+        f.write({Path: path, Cid: cid, Size: size, Start: 0, End: size}.to_json + "\n")
+      end
+      10.times do |i|
+        target = 'test_ipld/test_aggregated_file.txt'
+        path = "test_ipld/test_many_files_#{i}.txt"
+        f.write({Path: target, Cid: cidMap[path], Size: 10_000_000, Start: i *  1_000_000, End: (i + 1) * 1_000_000}.to_json + "\n")
+      end
+    end
+
+    out = `./generate-ipld-car -i test_output/test.ndjson -o test_output -p test_ipld`
+    puts out
+    result = JSON.parse(out)
+    dataCid = result['DataCid']
+    pieceCid = result['PieceCid']
+
+    # Now import the CAR file to ipfs
+    out = `ipfs dag import test_output/#{pieceCid}.car`
+    expect(out).to include dataCid
+    expect(out).to include 'success'
+
+    # Try get the file from ipfs and verify they are the same as the original files
+    system("ipfs get #{dataCid} -o test_ipld_out")
+
+    # Compare test_ipld and test_ipld_out folder to make sure they are the same
+    expect(`diff -r test_ipld test_ipld_out`).to eq ''
+  end
+end
+
 describe "GenerateCar" do
   after :each do
     FileUtils.rm_f(Dir['test/*.car'])

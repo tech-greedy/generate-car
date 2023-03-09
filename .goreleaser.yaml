@@ -2,6 +2,13 @@
 # Make sure to check the documentation at https://goreleaser.com
 builds:
   - binary: generate-car
+    main: ./cmd/generate-car
+    goos:
+      - linux
+      - windows
+      - darwin
+  - binary: generate-ipld-car
+    main: ./cmd/generate-ipld-car
     goos:
       - linux
       - windows

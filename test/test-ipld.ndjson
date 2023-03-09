@@ -1,8 +1,0 @@
-{"Path": "test/ipld/hello.txt","Size": 6,"Start": 0,"End": 6, "Cid": "bafkreicysg23kiwv34eg2d7qweipxwosdo2py4ldv42nbauguluen5v6am"}
-{"Path": "test/ipld/world.txt","Size": 6,"Start": 0,"End": 6, "Cid": "bafkreihcldjer7njjrrxknqh67cestxa7s7jf4nhnp62y6k4twcbahvtc4"}
-{"Path": "test/ipld/helloworld.txt","Size": 12,"Start": 0,"End": 6, "Cid": "bafkreicysg23kiwv34eg2d7qweipxwosdo2py4ldv42nbauguluen5v6am"}
-{"Path": "test/ipld/helloworld.txt","Size": 12,"Start": 6,"End": 12, "Cid": "bafkreihcldjer7njjrrxknqh67cestxa7s7jf4nhnp62y6k4twcbahvtc4"}
-{"Path": "test/ipld/1m.bin","Size": 1048576,"Start": 0,"End": 1048576, "Cid": "bafybeib33ymh377nzibyzgmzlnkceapbc47pwqndbzhyzuqa26e5fvmpce"}
-{"Path": "test/ipld/a/1.txt","Size": 2,"Start": 0,"End": 2, "Cid": "bafkreicysg23kiwv34eg2d7qweipxwosdo2py4ldv42nbauguluen5v6am"}
-{"Path": "test/ipld/a/2.txt","Size": 2,"Start": 0,"End": 2, "Cid": "bafkreictyi2ol2chfnvmkha24hflh7qg7lifhpvy5p6ys55qcbsvx7otym"}
-{"Path": "test/ipld/a/b/3.txt","Size": 2,"Start": 0,"End": 2, "Cid": "bafkreiarehh4zvmrh4fgh7webjx72rhkmt45ye24mzruxiab2ef46qycui"}

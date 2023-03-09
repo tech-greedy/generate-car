@@ -32,6 +32,9 @@ jobs:
       - name: Install Ruby RSpec
         run: bundle install --path .bundle
 
+      - name: Install IPFS
+        uses: ibnesayeed/setup-ipfs@master
+
       - name: Run regression test
         run: make test
 
