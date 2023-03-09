@@ -14,10 +14,6 @@ describe "GenerateIpldCar" do
   end
 
   it 'should be able to resolve file via ipfs' do
-    # Start IPFS daemon
-    ipfs = Thread.new { system('ipfs daemon') }
-    sleep 5
-
     numberOfFiles = 10000
     cidMap = {}
 
