@@ -41,20 +41,20 @@ type FsEntry struct {
 	SubEntries map[string]*FsEntry
 }
 
-func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService) (ipld.Node, error) {
+func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeNodes []cid.Cid) (ipld.Node, error) {
 	cidBuilder := merkledag.V1CidPrefix()
 	switch entry.Type {
 	case Dir:
 		dir := uio.NewDirectory(dagServ)
 		dir.SetCidBuilder(cidBuilder)
 		for name, subEntry := range entry.SubEntries {
-			subNode, err := getNode(ctx, subEntry, dagServ)
+			subNode, err := getNode(ctx, subEntry, dagServ, fakeNodes)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to get node for sub entry")
+				return nil, errors.Wrapf(err, "failed to get node for sub entry %s", name)
 			}
 			err = dir.AddChild(ctx, name, subNode)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to add child to directory")
+				return nil, errors.Wrapf(err, "failed to add child %s to directory", name)
 			}
 		}
 		node, err := dir.GetNode()
@@ -73,12 +73,12 @@ func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService) (ipld
 				return nil, errors.Wrap(err, "failed to parse cid")
 			}
 			node := NewFakeFSNode(entry.Chunks[0].Size, cid)
-			/* Do not add to dag service because this is a fake node
+			// Add to dag service temporarily and delete later because this is a fake node
 			err = dagServ.Add(ctx, node)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to add node to dag service")
 			}
-			*/
+			fakeNodes = append(fakeNodes, cid)
 			return &node, nil
 		} else {
 			node := unixfs.NewFSNode(unixfs_pb.Data_File)
@@ -181,9 +181,15 @@ func GenerateIpldCar(ctx context.Context, input io.Reader, parent string, writer
 	}
 
 	// Now iterate over the tree and create the IPLD nodes
-	rootNode, err := getNode(ctx, &rootDir, dagServ)
+	fakeNodes := make([]cid.Cid, 0)
+	rootNode, err := getNode(ctx, &rootDir, dagServ, fakeNodes)
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "failed to get root node")
+	}
+	// Remove the fake nodes from dag service so that they don't get written to the car file
+	err = dagServ.RemoveMany(ctx, fakeNodes)
+	if err != nil {
+		return cid.Undef, errors.Wrap(err, "failed to remove fake nodes from dag service")
 	}
 	err = car.WriteCar(ctx, dagServ, []cid.Cid{rootNode.Cid()}, writer, merkledag.IgnoreMissing())
 	if err != nil {
