@@ -7,7 +7,7 @@ A simple CLI to generate car file and compute commp at the same time.
 ```shell
 $ git clone https://github.com/tech-greedy/generate-car.git
 $ cd generate-car
-$ go build
+$ make build
 ```
 
 ### Usage
@@ -60,3 +60,33 @@ The output JSON dump contains `DataCid`, `PieceCid` and `PieceSize` which can be
 
 All files are read twice hence if the dataset source is on slow storage such as NFS or S3FS/Goofys mount, you may use tmpdir to copy the files to a fast local directory first.
 
+### Generate IPLD Car
+```shell
+$ ./generate-ipld-car -h
+NAME:
+   generate-ipld-car - generate ipld car archive from list of files and compute commp in the mean time. The generated car file only contains the file and folder information, not the actual data.
+
+USAGE:
+   generate-ipld-car [global options] command [command options] [arguments...]
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --input value, -i value       This is a ndjson file containing the list of files to be included in the car archive. If not specified, use stdin instead. (default: "-")
+   --piece-size value, -s value  Target piece size, default to minimum possible value (default: 0)
+   --out-dir value, -o value     Output directory to save the car file (default: ".")
+   --parent value, -p value      Parent path of the dataset
+   --help, -h                    show help
+```
+
+The input file needs to be a ndjson file that contains a list of file information. The list should be sorted. 
+
+If a file is split into multiple parts, they can be stitched together by using the same Path and proper Start and End values.
+
+If the Start and End value of those parts are not aligned, the file stitched may be corrupted.
+```ndjson
+{"Path":"test/test.txt","Size":100,"Start":0,"End":100,"Cid":"bafkqaaa"}
+{"Path":"test/test2.txt","Size":500,"Start":0,"End":250,"Cid":"bafkqbbb"}
+{"Path":"test/test2.txt","Size":500,"Start":250,"End":500,"Cid":"bafkqccc"}
+```

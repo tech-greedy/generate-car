@@ -14,7 +14,7 @@ describe "GenerateIpldCar" do
   end
 
   it 'should be able to resolve file via ipfs' do
-    numberOfFiles = 100
+    numberOfFiles = 10000
     cidMap = {}
 
     # Create a directory with a subdirectory that contains 10k small files
