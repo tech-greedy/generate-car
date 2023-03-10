@@ -119,13 +119,8 @@ func getNode(ctx context.Context, entry *FsEntry, dagServ ipld.DAGService, fakeN
 	return nil, nil, errors.New("invalid entry type")
 }
 
-func GenerateIpldCar(ctx context.Context, input io.Reader, parent string, writer io.Writer) (cid.Cid, error) {
+func GenerateIpldCar(ctx context.Context, input io.Reader, writer io.Writer) (cid.Cid, error) {
 	scanner := bufio.NewScanner(input)
-	parentPath, err := filepath.Abs(parent)
-	if err != nil {
-		return cid.Undef, errors.Wrap(err, "failed to get absolute path of parent")
-	}
-
 	blockStore := bstore.NewBlockstore(datastore.NewMapDatastore())
 	dagServ := merkledag.NewDAGService(blockservice.New(blockStore, nil))
 	rootDir := FsEntry{
@@ -141,12 +136,7 @@ func GenerateIpldCar(ctx context.Context, input io.Reader, parent string, writer
 			return cid.Undef, errors.Wrap(err, "failed to unmarshal json")
 		}
 
-		fPath, err := filepath.Abs(finfo.Path)
-		if err != nil {
-			return cid.Undef, errors.Wrap(err, "failed to get absolute path of file")
-		}
-
-		relPath, err := filepath.Rel(parentPath, fPath)
+		relPath := finfo.Path
 		relSegments := strings.Split(relPath, string(filepath.Separator))
 		pos := &rootDir
 		for i, seg := range relSegments {

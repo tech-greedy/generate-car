@@ -48,17 +48,10 @@ func main() {
 				Usage:   "Output directory to save the car file",
 				Value:   ".",
 			},
-			&cli.StringFlag{
-				Name:     "parent",
-				Aliases:  []string{"p"},
-				Usage:    "Parent path of the dataset",
-				Required: true,
-			},
 		}, Action: func(c *cli.Context) error {
 			inputFile := c.String("input")
 			pieceSizeInput := c.Uint64("piece-size")
 			outDir := c.String("out-dir")
-			parent := c.String("parent")
 			var in *os.File
 			if inputFile == "-" {
 				in = os.Stdin
@@ -81,7 +74,7 @@ func main() {
 
 			cp := new(commp.Calc)
 			writer := bufio.NewWriterSize(io.MultiWriter(carF, cp), BufSize)
-			cid, err := util.GenerateIpldCar(context.TODO(), in, parent, writer)
+			cid, err := util.GenerateIpldCar(context.TODO(), in, writer)
 			if err != nil {
 				return errors.Wrap(err, "failed to generate car file")
 			}
