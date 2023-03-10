@@ -16,7 +16,6 @@ import (
 	"github.com/ipld/go-car"
 	"github.com/pkg/errors"
 	"io"
-	"path/filepath"
 	"strings"
 )
 
@@ -137,7 +136,7 @@ func GenerateIpldCar(ctx context.Context, input io.Reader, writer io.Writer) (ci
 		}
 
 		relPath := finfo.Path
-		relSegments := strings.Split(relPath, string(filepath.Separator))
+		relSegments := strings.Split(relPath, "/")
 		pos := &rootDir
 		for i, seg := range relSegments {
 			last := i == len(relSegments)-1

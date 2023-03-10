@@ -71,7 +71,7 @@ describe "GenerateIpldCar" do
       end
     end
 
-    out = `./generate-ipld-car -i test_output/test.ndjson -o test_output -p test_ipld`
+    out = `./generate-ipld-car -i test_output/test.ndjson -o test_output`
     puts out
     result = JSON.parse(out)
     dataCid = result['DataCid']
@@ -86,7 +86,7 @@ describe "GenerateIpldCar" do
     system("ipfs get #{dataCid} -o test_ipld_out")
 
     # Compare test_ipld and test_ipld_out folder to make sure they are the same
-    expect(`diff -r test_ipld test_ipld_out`).to eq ''
+    expect(`diff -r test_ipld test_ipld_out/test_ipld`).to eq ''
   end
 end
 
